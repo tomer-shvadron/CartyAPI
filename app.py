@@ -1,29 +1,21 @@
-from flask import Flask, request, make_response
+from flask import Flask
 from flask_cors import CORS
-from bson.json_util import dumps
-import json
+
 import config
 from dal import Dal
+from routes.login import Login
+from routes.carts import Carts
 
 app = Flask(__name__)
 cors = CORS(app)
 
 db = Dal(config.DB['HOST'], config.DB['PORT'])
 
+login_route = Login()
+carts_route = Carts(db)
 
-@app.route('/login', methods=['POST'])
-def login():
-    credentials = json.loads(request.data)
-    return_object = {'email': credentials['email'], 'name': 'Tomer', 'token': 'kaki'}
-
-    return make_response(json.dumps(return_object), 200)
-
-
-@app.route('/carts/<user>')
-def getAllCarts(user):
-    carts = db.getAllCarts(user)
-    return make_response(dumps(carts), 200)
-
+app.add_url_rule('/login', view_func=login_route.login, methods=['POST'])
+app.add_url_rule('/carts/<user>', view_func=carts_route.get_all_carts)
 
 if __name__ == '__main__':
     app.run(host=config.HOST, port=config.PORT)
